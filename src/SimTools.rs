@@ -1,1 +1,1 @@
-pub mod SimSolver;
+pub mod simsolver;

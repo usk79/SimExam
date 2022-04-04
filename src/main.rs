@@ -1,15 +1,19 @@
 
-mod SimTools;
-use SimTools::{SimSolver};
-use SimSolver::{*};
-use SimModel::{*};
+mod simtools;
+use simtools::{simsolver};
+use simsolver::{*};
+use simmodel::{*};
 
 fn main() {
-    let mut solver = Simulator::<SpaceStateModel>::new(10.0, 0.01, SolverType::Euler);
+    
     let mut model = SpaceStateModel::new(2, 1, 2);
 
-    solver.run_sim();
-    model.init_state(&[0.0, 0.0]);
+    model.set_mat_a(&[0.0, 1.0, -1.0, -1.0]).unwrap();
+    model.set_mat_b(&[0.0, 1.0]).unwrap();
+    model.init_state(&[0.0, 0.0]).unwrap();
 
-    println!("Hello, world!");
+    let mut solver = Simulator::<SpaceStateModel>::new(20.0, 0.1, SolverType::Euler, model);
+    solver.run_sim();
+
+    
 }

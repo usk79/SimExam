@@ -1,8 +1,38 @@
 extern crate nalgebra as na;
 use na::{U2, U3, Dynamic, ArrayStorage, VecStorage, Matrix, OMatrix, DMatrix};
 
+#[derive(Debug)]
+pub enum SolverType {
+    Euler,
+    RungeKutta,
+}
+
 pub trait Model {
-    fn slopefunc(&self) -> DMatrix<f64>;
+    fn slopefunc(&self, x: &DMatrix<f64>) -> DMatrix<f64>;
+    fn get_state_info(&self) -> Vec<String>;   // モデルの状態の情報　（各要素の名前と次元数）
+    fn set_state(&mut self, newstate: DMatrix<f64>);
+    fn get_state(&self) -> &DMatrix<f64>;
+
+    fn calc_nextstate(&mut self, delta_t : f64, solvertype: &SolverType) { // オイラー法またはルンゲクッタ法による次の状態の計算
+        match solvertype {
+            SolverType::Euler => {
+                let state = self.get_state();
+                let newstate = state + self.slopefunc(state) * delta_t;
+                self.set_state(newstate);
+            },
+            SolverType::RungeKutta => {
+                let state = self.get_state();
+                let d1 = self.slopefunc(state) * delta_t;
+                let d2 = self.slopefunc(&(state + &d1 / 2.0)) * delta_t;
+                let d3 = self.slopefunc(&(state + &d2 / 2.0)) * delta_t;
+                let d4 = self.slopefunc(&(state + &d3)) * delta_t;
+                let newstate = state + (d1 + 2.0 * d2 + 2.0 * d3 + d4) / 6.0;
+                self.set_state(newstate);
+            }
+        }
+        
+    }
+
 }
 
 #[derive(Debug, Clone)]
@@ -24,7 +54,7 @@ impl SpaceStateModel {
             mat_b: DMatrix::from_element(sdim, idim, 0.0),
             mat_c: DMatrix::from_element(odim, sdim, 0.0),
             x: DMatrix::from_element(sdim, 1, 0.0),
-            u: DMatrix::from_element(idim, 1, 0.0),
+            u: DMatrix::from_element(idim, 1, 1.0),
             state_dim: sdim,
             input_dim: idim,
             output_dim: odim,
@@ -85,8 +115,23 @@ impl SpaceStateModel {
 
 }
 
+
 impl Model for SpaceStateModel {
-    fn slopefunc(&self) -> DMatrix<f64> {
-        &self.mat_a * &self.x + &self.mat_b * &self.u
+    fn slopefunc(&self, x: &DMatrix<f64>) -> DMatrix<f64> {
+        &self.mat_a * x + &self.mat_b * &self.u
+    }
+
+    fn get_state_info(&self) -> Vec<String> {
+        (0..self.state_dim)
+            .collect::<Vec<usize>>()
+            .iter().map(|x| format!("x_{}", x)).collect::<Vec<String>>() // ["x_0", "x_1", ... ] という配列を作る
+    }
+
+    fn set_state(&mut self, newstate: DMatrix<f64>) {
+        self.x = newstate; // 要素数チェックが必要と思う！
+    }
+
+    fn get_state(&self) -> &DMatrix<f64> {
+        &self.x
     }
 }
