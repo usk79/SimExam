@@ -27,8 +27,13 @@ where T: Model
         let storage_size = (simtime / delta_t + 0.5) as usize + 1;
 
         // シミュレーション結果を保存する領域を確保
-        for e in stateinfo.iter() {
+        storage.insert("time".to_string(), Vec::<f64>::with_capacity(storage_size)); // 時刻用
+        storage.get_mut("time").unwrap().push(0.0); // simstorageに時刻0のデータを格納
+
+        let state = model.get_state();
+        for (i, e) in stateinfo.iter().enumerate() {
             storage.insert(e.to_string(), Vec::<f64>::with_capacity(storage_size));
+            storage.get_mut(&e.to_string()).unwrap().push(state[i]);
         }
 
         Self {
@@ -42,12 +47,18 @@ where T: Model
 
     pub fn run_sim(&mut self) {
         let simsize = (self.simtime / self.delta_t + 0.5) as usize + 1;
+        let stateinfo = self.model.get_state_info();
 
-        for idx in 0..simsize {
-            
-            self.model.calc_nextstate(self.delta_t, &self.solvertype);
-            let vector = self.model.get_state().column(0);
-            println!("{}, {}", vector[0], vector[1]);
+        for idx in 1..simsize {
+            self.simstorage.get_mut("time").unwrap().push(idx as f64 * self.delta_t); // 時刻の記録
+
+            self.model.calc_nextstate(self.delta_t, &self.solvertype); // 1ステップ進める
+            let state = self.model.get_state(); // 現在の状態を取得する 
+            for (i, e) in stateinfo.iter().enumerate() {
+                self.simstorage.get_mut(&e.to_string()).unwrap().push(state[i]); // 計算結果を記録
+            }
         }
+
+        println!("{:?}", self.simstorage);
     }
 }
