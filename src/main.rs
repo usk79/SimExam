@@ -28,8 +28,8 @@ impl Model for NewModel {
         self.model.slopefunc(x)
     }
 
-    fn get_state_info(&self) -> Vec<String> {
-        self.model.get_state_info()
+    fn get_signals_info(&self) -> Vec<String> {
+        self.model.get_signals_info()
     }
 
     fn set_state(&mut self, newstate: DMatrix<f64>) {
@@ -44,6 +44,10 @@ impl Model for NewModel {
         self.model.set_u(&[1.0]).unwrap();
 
         self.model.calc_nextstate(delta_t, solvertype);
+    }
+
+    fn get_allsignals(&self) -> Vec<f64> { 
+        self.model.get_allsignals()
     }
 }
 
@@ -69,7 +73,7 @@ impl Model for RLCCircuit {
         self.model.slopefunc(x)
     }
 
-    fn get_state_info(&self) -> Vec<String> {
+    fn get_signals_info(&self) -> Vec<String> {
         vec!["i".to_string(), "q".to_string()]
     }
 
@@ -85,6 +89,10 @@ impl Model for RLCCircuit {
         self.model.set_u(&[1.0]).unwrap();
 
         self.model.calc_nextstate(delta_t, solvertype);
+    }
+
+    fn get_allsignals(&self) -> Vec<f64> { 
+        self.model.get_allsignals()
     }
 }
 

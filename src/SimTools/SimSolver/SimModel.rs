@@ -9,9 +9,10 @@ pub enum SolverType {
 
 pub trait Model {
     fn slopefunc(&self, x: &DMatrix<f64>) -> DMatrix<f64>;
-    fn get_state_info(&self) -> Vec<String>;   // モデルの状態の情報　（各要素の名前と次元数）
-    fn set_state(&mut self, newstate: DMatrix<f64>);
-    fn get_state(&self) -> &DMatrix<f64>;
+    fn get_signals_info(&self) -> Vec<String>;            // モデルの状態の情報　（各要素の名前と次元数）
+    fn set_state(&mut self, newstate: DMatrix<f64>);    // 状態ベクトルをセットする　get_stateで &mut Dmatixを返すようにすれば、setはいらないかも！確認
+    fn get_state(&self) -> &DMatrix<f64>;               // 状態ベクトルを取得する
+    fn get_allsignals(&self) -> Vec<f64>;               // Simulatorに渡して、データストレージに格納してもらうためのインターフェース
 
     fn calc_nextstate(&mut self, delta_t : f64, solvertype: &SolverType) { // オイラー法またはルンゲクッタ法による次の状態の計算
         match solvertype {
@@ -141,16 +142,29 @@ impl SpaceStateModel {
 
 }
 
-
 impl Model for SpaceStateModel {
     fn slopefunc(&self, x: &DMatrix<f64>) -> DMatrix<f64> {
         &self.mat_a * x + &self.mat_b * &self.u
     }
 
-    fn get_state_info(&self) -> Vec<String> {
-        (0..self.state_dim)
+    fn get_signals_info(&self) -> Vec<String> {
+        let mut inputseries = (0..self.input_dim)
             .collect::<Vec<usize>>()
-            .iter().map(|x| format!("x_{}", x)).collect::<Vec<String>>() // ["x_0", "x_1", ... ] という配列を作る
+            .iter().map(|u| format!("u_{}", u)).collect::<Vec<String>>(); // ["u_0", "u_1", ... ] という配列を作る
+
+        let mut stateseries = (0..self.state_dim)
+            .collect::<Vec<usize>>()
+            .iter().map(|x| format!("x_{}", x)).collect::<Vec<String>>(); // ["x_0", "x_1", ... ] という配列を作る
+        
+        let mut outputseries = (0..self.output_dim)
+            .collect::<Vec<usize>>()
+            .iter().map(|y| format!("y_{}", y)).collect::<Vec<String>>(); // ["y_0", "y_1", ...]
+
+        let mut series = Vec::new();
+        series.append(&mut inputseries);
+        series.append(&mut stateseries);
+        series.append(&mut outputseries);
+        series
     }
 
     fn set_state(&mut self, newstate: DMatrix<f64>) {
@@ -159,5 +173,16 @@ impl Model for SpaceStateModel {
 
     fn get_state(&self) -> &DMatrix<f64> {
         &self.x
+    }
+
+    fn get_allsignals(&self) -> Vec<f64> {
+        let mut u = self.u.iter().map(|u| *u).collect::<Vec<f64>>();
+        let mut x = self.x.iter().map(|x| *x).collect::<Vec<f64>>();
+        let mut o = self.get_observation().iter().map(|o| *o).collect::<Vec<f64>>();
+        let mut result = Vec::new();
+        result.append(&mut u);
+        result.append(&mut x);
+        result.append(&mut o);
+        result
     }
 }

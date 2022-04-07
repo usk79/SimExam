@@ -26,7 +26,7 @@ impl<T> Simulator<T>
 where T: Model
 {
     pub fn new(simtime: f64, delta_t: f64, solvertype: SolverType, model: T) -> Self {
-        let stateinfo = model.get_state_info();
+        let stateinfo = model.get_signals_info();
         let mut storage = HashMap::<String, Vec<f64>>::new();
         let storage_size = (simtime / delta_t + 0.5) as usize + 1;
         let simsize = (simtime / delta_t + 0.5) as usize + 1;
@@ -52,13 +52,13 @@ where T: Model
     }
 
     pub fn run_sim(&mut self) {
-        let stateinfo = self.model.get_state_info();
+        let stateinfo = self.model.get_signals_info();
 
         for idx in 1..self.simsize {
             self.simstorage.get_mut("time").unwrap().push(idx as f64 * self.delta_t); // 時刻の記録
 
             self.model.calc_nextstate(self.delta_t, &self.solvertype); // 1ステップ進める
-            let state = self.model.get_state(); // 現在の状態を取得する 
+            let state = self.model.get_allsignals(); // 現在の状態を取得する 
             for (i, e) in stateinfo.iter().enumerate() {
                 self.simstorage.get_mut(&e.to_string()).unwrap().push(state[i]); // 計算結果を記録
             }
@@ -71,7 +71,7 @@ where T: Model
         // 先頭の行（系列名を書き出す）
         //let keyary = self.simstorage.iter().map(|(k, _v)| k.to_string()).collect::<Vec<String>>(); // HashMapは順番が保持されない
         let mut seriesname = vec![String::from("time")];
-        seriesname.append( &mut self.model.get_state_info() );
+        seriesname.append( &mut self.model.get_signals_info() );
         writeln!(file, "{}", seriesname.join(","));
 
         for idx in 0..self.simsize { 
