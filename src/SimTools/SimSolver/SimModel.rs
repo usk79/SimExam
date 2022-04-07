@@ -54,7 +54,7 @@ impl SpaceStateModel {
             mat_b: DMatrix::from_element(sdim, idim, 0.0),
             mat_c: DMatrix::from_element(odim, sdim, 0.0),
             x: DMatrix::from_element(sdim, 1, 0.0),
-            u: DMatrix::from_element(idim, 1, 1.0),
+            u: DMatrix::from_element(idim, 1, 0.0),
             state_dim: sdim,
             input_dim: idim,
             output_dim: odim,
@@ -113,6 +113,32 @@ impl SpaceStateModel {
         Ok(())
     }
 
+    pub fn set_x(&mut self, x: &[f64]) -> Result<(), &str> {
+        if x.len() != self.state_dim {
+            return Err("状態ベクトルの次数が違います。")
+        }
+        for (i, elem) in x.iter().enumerate() {
+            self.x[i] = *elem;
+        }
+
+        Ok(())
+    }
+
+    pub fn set_u(&mut self, u: &[f64]) -> Result<(), &str> {
+        if u.len() != self.input_dim {
+            return Err("入力ベクトルの次数が違います。")
+        }
+        for (i, elem) in u.iter().enumerate() {
+            self.u[i] = *elem;
+        }
+
+        Ok(())
+    }
+
+    pub fn get_observation(&self) -> DMatrix<f64> {
+        &self.mat_c * &self.x
+    }
+
 }
 
 
@@ -128,7 +154,7 @@ impl Model for SpaceStateModel {
     }
 
     fn set_state(&mut self, newstate: DMatrix<f64>) {
-        self.x = newstate; // 要素数チェックが必要と思う！
+        self.x = newstate; // 要素数チェックが必要と思う！ ⇒　set_mat_xメソッドでチェックしているからOK
     }
 
     fn get_state(&self) -> &DMatrix<f64> {
