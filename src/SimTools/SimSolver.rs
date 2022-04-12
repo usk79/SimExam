@@ -1,3 +1,4 @@
+use std::fs;
 use std::fs::File;
 use std::io::{self, Write, BufWriter};
 
@@ -5,6 +6,9 @@ use std::collections::HashMap;
 
 extern crate nalgebra as na;
 use na::{U2, U3, Dynamic, ArrayStorage, VecStorage, Matrix, OMatrix, DMatrix};
+
+use plotters::prelude::*;
+
 
 pub mod simmodel;
 use simmodel::{*};
@@ -82,5 +86,60 @@ where T: Model
             writeln!(file, "{}", line).unwrap();
         }
         
+    }
+
+    pub fn timeplot(&self, dirname : &str, pltsize: (u32, u32)) {
+        match fs::create_dir(dirname) { 
+            Err(e) => println!("! {:?}", e.kind()),
+            Ok(_) => {},
+        }
+
+        let signalinfo = self.model.get_signals_info();
+        for signal in signalinfo.iter() {
+            self.timeplot_subfn(dirname, &signal, pltsize);
+        }
+
+    }
+
+    fn timeplot_subfn(&self, dirname: &str, signal: &String, pltsize: (u32, u32)) {
+        let filename = format!("./{}/{}.svg", dirname, signal);
+
+        let plt = BitMapBackend::new(&filename, pltsize).into_drawing_area();
+        plt.fill(&WHITE).unwrap();
+    
+        let font = ("sans-serif", 20);
+
+        let timeaxis: &Vec<f64> = self.simstorage.get("time").unwrap();
+        let valuaxis: &Vec<f64> = self.simstorage.get(signal).unwrap();
+        let (y_min, y_max) = valuaxis.iter()
+                         .fold(
+                           (0.0/0.0, 0.0/0.0),
+                           |(m,n), v| (v.min(m), v.max(n))
+                          ); // f64はNaNがあるためordが実装されていない。min, maxを使うための工夫が必要⇒https://qiita.com/lo48576/items/343ca40a03c3b86b67cb
+
+        let xrange = 0.0..self.simtime; 
+        let yrange = y_min..y_max;
+      
+        let mut chart = ChartBuilder::on(&plt)
+          .caption(&signal, font.into_font()) // キャプションのフォントやサイズ
+          .margin(10)                         // 上下左右全ての余白
+          .x_label_area_size(16)              // x軸ラベル部分の余白
+          .y_label_area_size(42)              // y軸ラベル部分の余白
+          .build_cartesian_2d(                // x軸とy軸の数値の範囲を指定する
+            xrange,                           // x軸の範囲
+            yrange)                           // y軸の範囲
+          .unwrap();
+    
+        // x軸y軸、グリッド線などを描画
+        chart.configure_mesh().draw().unwrap();
+
+        let line_series = LineSeries::new(
+            timeaxis.iter()
+                    .zip(valuaxis.iter())
+                    .map(|(x, y)| (*x, *y)),
+                &RED);
+
+        chart.draw_series(line_series).unwrap();
+
     }
 }

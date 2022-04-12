@@ -75,7 +75,7 @@ impl Model for RLCCircuit {
     }
 
     fn get_signals_info(&self) -> Vec<String> {
-        vec!["v", "i", "q", "vr", "vc"]
+        vec!["v", "i", "q", "Vr", "Vc"]
             .iter().map(|x| x.to_string()).collect::<Vec<String>>()
     }
 
@@ -115,4 +115,6 @@ fn main() {
     let mut rlcsim2 = Simulator::<RLCCircuit>::new(0.2, 0.00001, SolverType::RungeKutta, rlc2);
     rlcsim2.run_sim();
     rlcsim2.export_sim("./rlc2.csv");
+
+    rlcsim2.timeplot("rlc", (1000, 300));
 }
