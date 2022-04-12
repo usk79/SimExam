@@ -26,7 +26,7 @@ impl<T> Simulator<T>
 where T: Model
 {
     pub fn new(simtime: f64, delta_t: f64, solvertype: SolverType, model: T) -> Self {
-        let stateinfo = model.get_signals_info();
+        let signalinfo = model.get_signals_info();
         let mut storage = HashMap::<String, Vec<f64>>::new();
         let storage_size = (simtime / delta_t + 0.5) as usize + 1;
         let simsize = (simtime / delta_t + 0.5) as usize + 1;
@@ -35,10 +35,10 @@ where T: Model
         storage.insert("time".to_string(), Vec::<f64>::with_capacity(storage_size)); // 時刻用
         storage.get_mut("time").unwrap().push(0.0); // simstorageに時刻0のデータを格納
 
-        let state = model.get_state();
-        for (i, e) in stateinfo.iter().enumerate() {
+        let signals = model.get_allsignals();
+        for (i, e) in signalinfo.iter().enumerate() {
             storage.insert(e.to_string(), Vec::<f64>::with_capacity(storage_size));
-            storage.get_mut(&e.to_string()).unwrap().push(state[i]);
+            storage.get_mut(&e.to_string()).unwrap().push(signals[i]);
         }
 
         Self {
@@ -52,15 +52,15 @@ where T: Model
     }
 
     pub fn run_sim(&mut self) {
-        let stateinfo = self.model.get_signals_info();
+        let signalinfo = self.model.get_signals_info();
 
         for idx in 1..self.simsize {
             self.simstorage.get_mut("time").unwrap().push(idx as f64 * self.delta_t); // 時刻の記録
 
             self.model.calc_nextstate(self.delta_t, &self.solvertype); // 1ステップ進める
-            let state = self.model.get_allsignals(); // 現在の状態を取得する 
-            for (i, e) in stateinfo.iter().enumerate() {
-                self.simstorage.get_mut(&e.to_string()).unwrap().push(state[i]); // 計算結果を記録
+            let signals = self.model.get_allsignals(); // 現在の状態を取得する 
+            for (i, e) in signalinfo.iter().enumerate() {
+                self.simstorage.get_mut(&e.to_string()).unwrap().push(signals[i]); // 計算結果を記録
             }
         }
     }

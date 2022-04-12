@@ -60,6 +60,7 @@ impl RLCCircuit {
         let mut model = SpaceStateModel::new(2, 1, 2);
         model.set_mat_a(&[-r / l, -1.0 / (l * c), 1.0, 0.0]).unwrap();
         model.set_mat_b(&[1.0 / l, 0.0]).unwrap();
+        model.set_mat_c(&[r, 0.0, 0.0, 1.0 / c]).unwrap();
         model.init_state(&[0.0, 0.0]).unwrap();
 
         Self {
@@ -74,7 +75,8 @@ impl Model for RLCCircuit {
     }
 
     fn get_signals_info(&self) -> Vec<String> {
-        vec!["i".to_string(), "q".to_string()]
+        vec!["v", "i", "q", "vr", "vc"]
+            .iter().map(|x| x.to_string()).collect::<Vec<String>>()
     }
 
     fn set_state(&mut self, newstate: DMatrix<f64>) {
