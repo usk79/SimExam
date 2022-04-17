@@ -102,7 +102,7 @@ where T: Model
     }
 
     fn timeplot_subfn(&self, dirname: &str, signal: &String, pltsize: (u32, u32)) {
-        let filename = format!("./{}/{}.svg", dirname, signal);
+        let filename = format!("./{}/{}.png", dirname, signal);
 
         let plt = BitMapBackend::new(&filename, pltsize).into_drawing_area();
         plt.fill(&WHITE).unwrap();
