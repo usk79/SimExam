@@ -1,6 +1,8 @@
 extern crate nalgebra as na;
 use na::{U2, U3, Dynamic, ArrayStorage, VecStorage, Matrix, OMatrix, DMatrix};
 
+use std::fmt;
+
 mod simtools;
 use simtools::{simsolver};
 use simsolver::{*};
@@ -12,7 +14,7 @@ struct NewModel {
 
 impl NewModel {
     pub fn new() -> Self {
-        let mut model = SpaceStateModel::new(2, 1, 2);
+        let mut model = SpaceStateModel::new(2, 1, 1);
         model.set_mat_a(&[0.0, 1.0, -1.0, -1.0]).unwrap();
         model.set_mat_b(&[0.0, 1.0]).unwrap();
         model.init_state(&[0.0, 0.0]).unwrap();
@@ -50,6 +52,13 @@ impl Model for NewModel {
         self.model.get_allsignals()
     }
 }
+
+impl fmt::Display for NewModel {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.model.fmt(f)
+    }
+}
+
 
 struct RLCCircuit {
     model: SpaceStateModel,
@@ -104,11 +113,19 @@ impl Model for RLCCircuit {
     }
 }
 
+impl fmt::Display for RLCCircuit {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.model.fmt(f)
+    }
+}
+
 fn main() {
-    
+    /*
     let model = NewModel::new();
     let rlc = RLCCircuit::new(10.0, 0.3e-3, 0.1e-6, 0.0, 0.0);    // http://programmer-life.net/tfunc_040.html　のパラメータ
     let rlc2 = RLCCircuit::new(10.0, 100e-3, 100e-6, 0.1, 0.0002);   
+    println!("{}", model);
+    println!("{}", rlc2);
 
     let mut solver = Simulator::<NewModel>::new(10.0, 0.01, SolverType::RungeKutta, model);
     solver.run_sim();
@@ -122,5 +139,14 @@ fn main() {
     rlcsim2.run_sim();
     rlcsim2.export_sim("./rlc2.csv");
 
-    rlcsim2.timeplot("rlc4", (1000, 300));
+    rlcsim2.timeplot("rlc4", (1000, 300));*/
+
+    let mut model = SpaceStateModel::from_tf(&[3.0, 1.0, 1.0, 5.0, 4.0], &[2.0, 2.0, 3.0, 4.0, 5.0]).unwrap();
+    println!("{}", model);
+    model.set_u(&[1.0]);
+    let mut tfsim = Simulator::<SpaceStateModel>::new(1.0, 0.001, SolverType::RungeKutta, model);
+    tfsim.run_sim();
+    tfsim.export_sim("./tfsim.csv");
+    tfsim.timeplot("tfsim", (1000, 300));
+    
 }
