@@ -141,10 +141,11 @@ fn main() {
 
     rlcsim2.timeplot("rlc4", (1000, 300));*/
 
-    let mut model = SpaceStateModel::from_tf(&[3.0, 1.0, 1.0, 5.0, 4.0], &[2.0, 2.0, 3.0, 4.0, 5.0]).unwrap();
-    println!("{}", model);
-    model.set_u(&[1.0]);
-    let mut tfsim = Simulator::<SpaceStateModel>::new(1.0, 0.001, SolverType::RungeKutta, model);
+    //let mut model = SpaceStateModel::from_tf(&[3.0, 1.0, 1.0, 5.0, 4.0], &[2.0, 2.0, 3.0, 4.0, 5.0]).unwrap();
+    let mut model = TransFuncModel::new(&[1.0], &[1.0, 1.0]);
+    //println!("{}", model);
+    model.set_u(1.0);
+    let mut tfsim = Simulator::<TransFuncModel>::new(5.0, 0.001, SolverType::RungeKutta, model);
     tfsim.run_sim();
     tfsim.export_sim("./tfsim.csv");
     tfsim.timeplot("tfsim", (1000, 300));

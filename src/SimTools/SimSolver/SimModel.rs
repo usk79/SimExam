@@ -327,14 +327,38 @@ pub struct TransFuncModel {
 }
 
 impl TransFuncModel {
-    fn new(num_coef: &Vec<f64>, den_coef: &Vec<f64>) -> Self {
-        let num = num_coef.clone();
-        let den = den_coef.clone();
-        let model = SpaceStateModel::new(2, 1, 2);
+    pub fn new(num_coef: &[f64], den_coef: &[f64]) -> Self {
+        let model = SpaceStateModel::from_tf(&num_coef, &den_coef).unwrap();
         Self {
-            num : num,
-            den : den,  
+            num : num_coef.to_vec(),
+            den : den_coef.to_vec(),  
             model : model,
         }
+    }
+
+    pub fn set_u(&mut self, u: f64) {
+        self.model.set_u(&vec![u]);
+    }
+}
+
+impl Model for TransFuncModel {
+    fn slopefunc(&self, x: &DMatrix<f64>) -> DMatrix<f64> {
+        self.model.slopefunc(x)
+    }
+
+    fn get_signals_info(&self) -> Vec<String> {
+        self.model.get_signals_info()
+    }
+
+    fn set_state(&mut self, newstate: DMatrix<f64>) {
+        self.model.set_state(newstate);
+    }
+
+    fn get_state(&self) -> &DMatrix<f64> {
+        &self.model.get_state()
+    }
+
+    fn get_allsignals(&self) -> Vec<f64> {
+        self.model.get_allsignals()
     }
 }
